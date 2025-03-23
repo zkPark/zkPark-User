@@ -10,10 +10,6 @@ import WalletPage from "../(walletDetails)/walletDetails";
 import { router } from "expo-router";
 import { useFocusEffect } from '@react-navigation/native';
 
-const GOOGLE_VISION_API_KEY = "AIzaSyDfMGQzC5bnE2XXHWqbptWalHMMc9s4Rkk";
-const HUMANITY_API_URL = "https://issuer.humanity.org/credentials/issue";
-const HUMANITY_API_KEY = "8b7bf62c-b190-436c-942d-9cd03fd13b59";
-
 interface LicenseDetails {
   name: string;
   dob: string;
@@ -95,7 +91,6 @@ const Profile = () => {
             setUserName(displayName);
           }
           
-          // Set email as a fallback in case the auth user email is empty
           if (!user.email && data.email_id) {
             setUserEmail(data.email_id);
           }
@@ -104,7 +99,6 @@ const Profile = () => {
         }
       } else {
         console.log("No authenticated user found");
-        // Handle no user case - maybe redirect to login
       }
     } catch (error) {
       console.error("Error in fetchUserProfile:", error);
@@ -113,13 +107,11 @@ const Profile = () => {
     }
   };
 
-  // Fetch user rewards from the API
   const fetchUserRewards = async (walletAddr: string) => {
     try {
       setLoadingRewards(true);
       console.log("Fetching rewards for wallet:", walletAddr);
       
-      // Call API to get rewards - similar to your friend's code
       const response = await axios.get(`https://zkpark-b3df457d7927.herokuapp.com/api/token/balance/${walletAddr}`);
       
       if (response.data && response.data.balance) {
@@ -131,7 +123,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching user rewards:", error);
-      setUserRewards("0"); // Set to 0 on error instead of "Error"
+      setUserRewards("0");
     } finally {
       setLoadingRewards(false);
     }
@@ -148,7 +140,6 @@ const Profile = () => {
 
   const handleLogout = async () => {
     try {
-      // Show confirmation
       Alert.alert(
         "Logout",
         "Are you sure you want to logout?",
@@ -196,136 +187,6 @@ const Profile = () => {
     }
   };
 
-  const convertToBase64 = async (uri: string) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result;
-        if (typeof result === "string") {
-          resolve(result.split(",")[1] || "");
-        } else if (result instanceof ArrayBuffer) {
-          const text = new TextDecoder().decode(result); // Convert ArrayBuffer to string
-          resolve(text.split(",")[1] || "");
-        } else {
-          resolve(""); // Handle unexpected case
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  // Function to call Google Vision API
-  const callGoogleVisionApi = async (base64Image: string) => {
-    try {
-      const response = await axios.post(
-        `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`,
-        {
-          requests: [
-            {
-              image: { content: base64Image },
-              features: [{ type: "TEXT_DETECTION" }],
-            },
-          ],
-        }
-      );
-      return response.data.responses[0]?.fullTextAnnotation?.text || "";
-    } catch (error) {
-      console.error("Error calling Google Vision API:", error);
-      return "";
-    }
-  };
-
-  // Function to extract name and dob from the extracted text and call Humanity API
-  const extractAndSendDetails = async (text: string) => {
-    // Updated regex to handle spaces, line breaks, and some noise in the input text
-    const nameMatch = text.match(/Name\s*[:\-\s]*([A-Za-z\s]+(?:\s+[A-Za-z]+)*)/i); // More flexible for name matching
-    const dobMatch = text.match(/Date\s*of\s*Birth\s*[:\-\s]*([\d\/-]+)/i); // More flexible for date of birth
-    
-    // Check if both name and dob were extracted
-    if (nameMatch && dobMatch) {
-      const details: LicenseDetails = {
-        name: nameMatch[1].trim(),
-        dob: dobMatch[1].trim(),
-      };
-      setLicenseDetails(details);
-      
-      // Send to Humanity API
-      await sendToHumanityApi(details);
-    } else {
-      // Log the error and the extracted text for debugging
-      Alert.alert("Error", "Failed to extract name and DOB from the ID.");
-      console.log("Extracted Text:", text);
-      console.log("Name match:", nameMatch);
-      console.log("DOB match:", dobMatch);
-    }
-  };
-
-  // Function to send extracted details to Humanity API
-  const sendToHumanityApi = async (details: LicenseDetails) => {
-    try {
-      const response = await fetch(HUMANITY_API_URL, {
-        method: "POST",
-        headers: {
-          "X-API-Token": HUMANITY_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          subject_address: "0x5e85e7ccd3df23ef25f3e30a3abd4913ac750a9d",
-          claims: {
-            kyc: "passed",
-            name: details.name,
-            dob: details.dob,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      console.log("VC Response:", data);
-      Alert.alert("Verification Status", "Your ID has been verified!");
-    } catch (error) {
-      console.error("Error sending to Humanity API:", error);
-      Alert.alert("Error", "Failed to send details to Humanity API.");
-    }
-  };
-
-  const handleImageUpload = async () => {
-    try {
-      setLoading(true);
-
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 1,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const imageUri = result.assets[0].uri;
-      const base64Image = await convertToBase64(imageUri);
-
-      // Call Google Vision API to extract text
-      const extractedText = await callGoogleVisionApi(base64Image);
-      console.log("Extracted Text:", extractedText);
-      setExtractedText(extractedText);
-
-      // Extract and send details to Humanity API
-      await extractAndSendDetails(extractedText);
-
-    } catch (error) {
-      console.error("Error:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Format rewards for display
   const formatRewards = (rewards: string) => {
     if (!rewards || rewards === "0") return "0";
     return rewards;
@@ -424,7 +285,7 @@ const Profile = () => {
 
         <TouchableOpacity
           className="flex-row items-center bg-gray-800 p-4 rounded-xl h-16 mb-3"
-          onPress={handleImageUpload}>
+          >
           <FontAwesome name="id-card" size={20} color="#9333EA" />
           <View className="flex flex-row justify-between items-center flex-1">
             <Text className="text-white ml-3 text-lg">Upload ID & Get Verified</Text>

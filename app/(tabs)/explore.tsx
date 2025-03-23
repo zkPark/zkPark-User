@@ -3,7 +3,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { View, Text, ScrollView, TextInput, Alert, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, { Marker, Region, Circle } from "react-native-maps";
+import MapView, { Marker, Circle } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { supabase } from "../supabaseAccess";

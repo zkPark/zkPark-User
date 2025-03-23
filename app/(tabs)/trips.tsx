@@ -8,16 +8,15 @@ import { supabase } from "../supabaseAccess";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSavedReservations } from "../SavedReservationsContext";
 
-// Define the structure of a reservation
 type Reservation = {
-  id?: string; // Primary key from either Parking_Transactions 
+  id?: string;
   parking_transaction_id?: string; 
   title: string;
   date: string;
   from_time?: string;
   to_time?: string;
-  startTime?: string; // Alternative format from AsyncStorage
-  endTime?: string; // Alternative format from AsyncStorage
+  startTime?: string;
+  endTime?: string;
   price: string;
   status: "Active" | "Completed";
   parking_id?: string;
@@ -33,10 +32,8 @@ const Trips = () => {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const { addSavedReservation, removeSavedReservation, isSaved } = useSavedReservations();
-  const router = useRouter();
   const params = useLocalSearchParams();
-  
-  // Check if we have a new reservation from params
+
   const newReservation = params.newReservation === "true";
   const sessionId = params.sessionId as string | undefined;
 

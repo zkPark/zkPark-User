@@ -49,7 +49,6 @@ const Saved = () => {
                 key={trip.parking_transaction_id || `trip-${index}`} 
                 className="bg-gray-800 p-4 rounded-lg mb-4"
               >
-                {/* Title and Status */}
                 <View className="flex flex-row justify-between items-center">
                   <Text className="text-gray-100 text-lg text-wrap flex-1 font-bold">{trip.title}</Text>
                   <View className="flex-row items-center">
