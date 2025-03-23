@@ -2,7 +2,7 @@
 
 # dependencies
 node_modules/
-
+service-account.json
 # Expo
 .expo/
 dist/
